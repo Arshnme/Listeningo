@@ -1,0 +1,465 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --obsidian: 5 5 5;
+    --hairline: rgba(255, 255, 255, 0.12);
+    color-scheme: dark;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-[#050505] text-white antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  /* Monochrome ambient light: a single soft radial bloom behind the content. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 70%);
+  }
+
+  ::selection {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+  }
+
+  input,
+  button,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* A single, consistent focus ring across the entire product. */
+  :focus-visible {
+    outline: 1.5px solid rgba(255, 255, 255, 0.85);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+    background-clip: content-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- glass -- */
+
+  /* Base translucent panel: specular border + inner top-edge highlight. */
+  .glass {
+    @apply relative overflow-hidden rounded-3xl border border-white/[0.12] bg-white/[0.03] backdrop-blur-2xl;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.25),
+      0 20px 50px rgba(0, 0, 0, 0.85);
+  }
+
+  /* Denser variant for the HUD, hero cards and overlays. */
+  .glass-strong {
+    @apply relative overflow-hidden rounded-3xl border border-white/[0.16] bg-white/[0.05] backdrop-blur-2xl;
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.28),
+      0 24px 60px rgba(0, 0, 0, 0.9);
+  }
+
+  /* Lighter variant for nested rows and compact controls. */
+  .glass-inset {
+    @apply relative rounded-2xl border border-white/[0.08] bg-white/[0.025];
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  /* Refractive specular sweep across the top edge of hero surfaces. */
+  .glass-sheen::after {
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  }
+
+  /* ------------------------------------------------------------- controls -- */
+
+  .btn-primary {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold tracking-tight text-[#050505] transition-transform duration-200 ease-out hover:scale-[1.015] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 14px 34px rgba(0, 0, 0, 0.7);
+  }
+
+  .btn-ghost {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-2xl border border-white/[0.12] bg-white/[0.03] px-4 py-3 text-sm font-medium tracking-tight text-neutral-200 backdrop-blur-xl transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] hover:text-white active:scale-[0.985] disabled:pointer-events-none disabled:opacity-40;
+  }
+
+  .btn-ghost-active {
+    @apply border-white/70 bg-white/[0.1] text-white;
+  }
+
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.03] text-neutral-300 transition-colors hover:border-white/30 hover:text-white;
+  }
+
+  /* --------------------------------------------------------------- badges -- */
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-300;
+  }
+
+  .pill-solid {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#050505];
+  }
+
+  .metric {
+    @apply font-mono tabular-nums tracking-tight;
+  }
+
+  /* ------------------------------------------------------------ path nodes -- */
+
+  /* Nodes are rendered as extruded 3D pucks rather than flat discs: a lit top
+     face plus an 8px physical lip underneath, so they read as pressable
+     hardware. The lip is a hard-edged (zero-blur) box-shadow, which is what
+     gives it a solid silhouette rather than a glow.
+     Press physics is pure CSS `:active`, deliberately not a JS animation: the
+     button must still travel downward when a scripted animation frame never
+     arrives. */
+
+  /* Completed: polished silver glass. */
+  .node3d-done {
+    @apply relative flex items-center justify-center rounded-full border border-white/[0.28] bg-gradient-to-b from-white/[0.18] to-white/[0.06] text-white backdrop-blur-2xl;
+    box-shadow:
+      0 8px 0 0 rgba(255, 255, 255, 0.14),
+      0 14px 24px rgba(0, 0, 0, 0.85),
+      inset 0 2px 4px rgba(255, 255, 255, 0.35);
+    transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+  }
+  .node3d-done:active:not(:disabled) {
+    @apply translate-y-[6px];
+    box-shadow: 0 2px 0 0 rgba(255, 255, 255, 0.14);
+  }
+
+  /* Active: pure white crystal, the brightest object on the screen. */
+  .node3d-active {
+    @apply relative flex items-center justify-center rounded-full bg-gradient-to-b from-white via-neutral-100 to-neutral-300 text-[#050505];
+    box-shadow:
+      0 8px 0 0 #a3a3a3,
+      0 16px 30px rgba(255, 255, 255, 0.28),
+      inset 0 2px 3px rgba(255, 255, 255, 1);
+    transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+  }
+  .node3d-active:active:not(:disabled) {
+    @apply translate-y-[6px];
+    box-shadow:
+      0 2px 0 0 #a3a3a3,
+      0 6px 15px rgba(255, 255, 255, 0.18);
+  }
+
+  /* Locked: carved obsidian, almost no contrast by design. */
+  .node3d-locked {
+    @apply relative flex items-center justify-center rounded-full border border-white/[0.07] bg-gradient-to-b from-neutral-900/90 to-black/95 text-neutral-600;
+    box-shadow:
+      0 7px 0 0 #141414,
+      0 12px 20px rgba(0, 0, 0, 0.9),
+      inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+  }
+  .node3d-locked:active:not(:disabled) {
+    @apply translate-y-[5px];
+    box-shadow: 0 2px 0 0 #141414, 0 4px 10px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Curved dome: a crescent of light across the upper half of the puck, which is
+     what sells the surface as a glass lens rather than a flat circle. */
+  .node3d-dome {
+    @apply pointer-events-none absolute left-1/2 top-1 h-1/2 w-[85%] -translate-x-1/2 rounded-full bg-gradient-to-b from-white/30 to-transparent;
+  }
+  .node3d-dome-dark {
+    @apply pointer-events-none absolute left-1/2 top-1 h-1/2 w-[85%] -translate-x-1/2 rounded-full bg-gradient-to-b from-white/[0.055] to-transparent;
+  }
+
+  /* Inner bevel for the special nodes (workout, reward, boss). */
+  .node3d-bevel {
+    @apply pointer-events-none absolute inset-[7px] rounded-full border border-white/[0.12];
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+  }
+  .node3d-bevel-dark {
+    @apply pointer-events-none absolute inset-[7px] rounded-full border border-white/[0.05];
+  }
+
+  /* 3D docking socket: a recessed plate under every puck, tilted back inside
+     the node's own perspective so the button reads as seated in hardware
+     rather than floating on a flat plane. The 10px hard-edged lip is what
+     gives the plate its physical thickness. */
+  .node3d-pedestal {
+    @apply pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 rounded-full border border-white/[0.12];
+    transform: translate(-50%, -50%) rotateX(18deg);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.9));
+    box-shadow:
+      0 10px 0 0 #0f0f12,
+      0 20px 35px rgba(0, 0, 0, 0.95),
+      inset 0 3px 6px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Travelling light pulse along the active conduit. Dash offset only, so the
+     tube stays fully drawn if frames stop arriving; `prefers-reduced-motion`
+     freezes it as a static dashed highlight. */
+  .conduit-pulse {
+    animation: conduit-flow 1.4s linear infinite;
+  }
+
+  /* Aura that breathes around the active node. */
+  .path-node-aura {
+    animation: node-aura 2.4s ease-in-out infinite;
+  }
+
+  /* Persian translation surfaces. Vazirmatn is loaded through next/font and
+     exposed as --font-fa; the fallbacks keep Farsi legible before it settles. */
+  .fa-text {
+    font-family: var(--font-fa), 'Vazirmatn', 'Noto Sans Arabic', system-ui, sans-serif;
+    direction: rtl;
+    unicode-bidi: isolate;
+    line-height: 2;
+    letter-spacing: 0;
+  }
+
+  /* Floating "START" tooltip above the active node. */
+  .path-node-bob {
+    animation: node-bob 1.8s ease-in-out infinite;
+  }
+
+  /* ------------------------------------------------------------- skeleton -- */
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-2xl bg-white/[0.045];
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.09) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-line 1.8s linear infinite;
+  }
+
+  /* ----------------------------------------------------------- diff tokens -- */
+
+  .diff-correct {
+    @apply text-white;
+  }
+
+  /* Spelling slip: the right word, written differently. Amber rather than the
+     monochrome palette because it carries meaning the learner must act on, and
+     it is desaturated so it still belongs on an obsidian surface. */
+  .diff-misspelled {
+    @apply text-amber-300/90;
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: rgba(252, 211, 77, 0.55);
+    text-underline-offset: 4px;
+  }
+
+  .diff-wrong {
+    @apply text-red-400/85 line-through decoration-red-400/45;
+  }
+
+  .diff-missing {
+    @apply text-red-400/70;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: rgba(248, 113, 113, 0.5);
+    text-underline-offset: 4px;
+  }
+
+  .diff-extra {
+    @apply text-red-400/60;
+    text-decoration: line-through;
+    text-decoration-color: rgba(248, 113, 113, 0.35);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Grid used by the spectrum bars; keeps layout stable while heights animate. */
+  .spectrum-grid {
+    display: grid;
+    align-items: end;
+    height: 100%;
+  }
+}
+
+/* Keyframes referenced by arbitrary-value animation utilities. Declared globally
+   so they resolve even though they are only used via `animate-[name_...]`. */
+@keyframes menu-in {
+  from {
+    transform: translateY(-6px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    transform: translate(-50%, 8px);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes node-aura {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes node-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* One dash period of the conduit pulse (12 on + 24 off). */
+@keyframes conduit-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+/* Stepping stones breathe rather than flash, so a lit stone stays legible. */
+@keyframes stone-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Equalizer bars of the waveform totem: origin is the bar's base. */
+@keyframes eq-bar {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Companion mascot: a quick blink with a long, calm interval between. */
+@keyframes mascot-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.08);
+  }
+}
+
+/* Sound rings travelling out of a mascot's ear cup / ear. */
+@keyframes mascot-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Notes drifting up from a mascot and fading. */
+@keyframes mascot-note {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.85;
+  }
+}
+
+/* Speech bubble entrance — opacity only, so the element's positioning
+   transforms (centring) are never overridden by the animation. */
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes chest-pop {
+  0% {
+    transform: scale(0.7) rotate(-8deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}

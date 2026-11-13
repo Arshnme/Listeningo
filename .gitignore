@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.pem
+.vercel
+
+# logs (Vercel CLI and local dev servers both write these here)
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files
+.env*
+!.env.example
+
+# generator scratch: harvester page cache, language-detection cache, translation
+# cache. All three rebuild themselves on the next run, so they stay local.
+scripts/.*
+__pycache__/

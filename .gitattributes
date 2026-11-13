@@ -1,0 +1,8 @@
+# Store text as LF in the repository; check out with the platform's own endings.
+* text=auto
+
+# Never diff these as text.
+*.png binary
+*.jpg binary
+*.webm binary
+*.woff2 binary

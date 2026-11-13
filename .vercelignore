@@ -1,0 +1,16 @@
+# Vercel CLI upload filter.
+#
+# The Git-integration path only ever sees the repository, but `vercel --prod`
+# run from this folder uploads the working tree. These are the local-only
+# artifacts that must never travel: dependencies and build output are rebuilt
+# on Vercel anyway, and the caches/logs are machine-local scratch.
+node_modules
+.next
+.vercel
+.env*
+*-server.log
+*.tsbuildinfo
+scripts/.harvest-cache.json
+scripts/.fa-cache.json
+__pycache__
+.DS_Store
