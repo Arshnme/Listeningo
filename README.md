@@ -229,31 +229,82 @@ dropped by a length ceiling. The data is machine-generated and the interface say
 full-sentence translation is always one click away for the cases where a single word is
 genuinely ambiguous.
 
-## Under the hood
+## Project structure
 
 ```
-src/
-  app/            layout, static entry, design tokens and glass surfaces
-  components/     path, conduit, nodes, companions, arena, diff card, dashboard, settings
-  lib/
-    path.ts               node definitions, unlock rules, stars, weak words
-    scoring.ts            alignment, adaptation rules, XP
-    fuzzy.ts              edit distance, phonetic keys, tolerant matching
-    session.ts            deterministic, node-aware clip pool
-    audio/engine.ts       Web Audio graph, transport, spectrum
-    audio/noise.ts        noise synthesis, RMS metering, SNR solve
-    audio/opus.ts         WebCodecs Opus encode and WebM muxer
-    localAudio.ts         bundled clip resolution
-    manifest.ts           two-layer corpus, measured size model
-    translationService.ts English to Persian resolution
-    storage.ts            localStorage document, validation, quota pruning
-  data/           bundled core manifest and Persian translations
-public/
-  manifest.json   the full corpus index, 4,491 clips
-  fa.json         pre-generated translations
-  audio/          4,491 WebM/Opus clips
-scripts/          harvest, translate, bundle-audio, fonts, verification suites
+Listeningo
+├─ src/
+│  ├─ app/                     the Next.js app router entry
+│  │  ├─ layout.tsx            vendored fonts, metadata, ambient background
+│  │  ├─ page.tsx              renders the shell
+│  │  ├─ globals.css           design tokens, glass surfaces, diff colours
+│  │  └─ fonts/                Inter, Geist Mono, Vazirmatn (woff2, committed)
+│  ├─ components/              19 components plus shared primitives in ui/
+│  │  ├─ AppShell.tsx          owns engine, pool, session and path progress
+│  │  ├─ PathView.tsx          the winding path and its unit banners
+│  │  ├─ PathConduit.tsx       four-layer 3D conduit and stepping stones
+│  │  ├─ PathNode.tsx          node states, pedestal, star ribbon, START pill
+│  │  ├─ PathCharacter.tsx     companions: CSS rig, optional artwork on top
+│  │  ├─ ListeningArena.tsx    one round, global keyboard shortcuts
+│  │  ├─ AudioStage.tsx        transport, spectrum, replay and noise monitors
+│  │  ├─ DiffCard.tsx          word-level diff, score, round paging
+│  │  ├─ PersianPanel.tsx      RTL sentence reveal and per-word glosses
+│  │  ├─ SessionSummary.tsx    trajectory, node outcome, per-voice replay
+│  │  ├─ Dashboard.tsx         ladder, KPI grid, clean vs noisy, history
+│  │  ├─ SettingsView.tsx      session length, adaptive, acoustic, offline, storage
+│  │  ├─ GuidebookModal.tsx    per-unit reference, focus-trapped
+│  │  ├─ NavBar.tsx            the floating bottom dock
+│  │  ├─ SessionOverlay.tsx    full-screen shell for the arena and summary
+│  │  ├─ LevelShiftBanner.tsx  promotion and demotion announcements
+│  │  ├─ RoundHeader.tsx       round metadata strip
+│  │  ├─ SpectrumVisualizer.tsx
+│  │  ├─ TranscriptInput.tsx
+│  │  └─ ui/                   GlassCard, Pill, Toggle, Bar, icons
+│  ├─ lib/
+│  │  ├─ path.ts               node definitions, unlock rules, stars, weak words
+│  │  ├─ scoring.ts            alignment, adaptation rules, XP
+│  │  ├─ fuzzy.ts              edit distance, phonetic keys, tolerant matching
+│  │  ├─ session.ts            deterministic, node-aware clip pool
+│  │  ├─ levels.ts             tier definitions, noise intensity, slow rates
+│  │  ├─ conduit.ts            shared 420px path grid, segment states
+│  │  ├─ text.ts               normalisation, numbers, contractions
+│  │  ├─ english.ts            the English-vocabulary lexicon
+│  │  ├─ audio/engine.ts       Web Audio graph, transport, spectrum
+│  │  ├─ audio/noise.ts        noise synthesis, RMS metering, SNR solve
+│  │  ├─ audio/opus.ts         WebCodecs Opus encode and WebM muxer
+│  │  ├─ localAudio.ts         bundled clip resolution
+│  │  ├─ hf.ts                 dataset resolver, signed-URL fetching
+│  │  ├─ manifest.ts           two-layer corpus, measured size model
+│  │  ├─ idb.ts                IndexedDB clip cache, LRU
+│  │  ├─ offline.ts            bulk tier download for offline play
+│  │  ├─ translationService.ts English to Persian resolution
+│  │  ├─ storage.ts            localStorage document, validation, quota pruning
+│  │  ├─ uiSoundEngine.ts      synthesised interface cues
+│  │  ├─ hooks.ts              shared React hooks
+│  │  └─ types.ts              shared types
+│  └─ data/                    bundled 60-clip core and its translations
+├─ public/
+│  ├─ audio/                   4,491 WebM/Opus clips, 73.4 MB
+│  ├─ manifest.json            the full corpus index, 1,005 KB
+│  └─ fa.json                  pre-generated Persian translations
+├─ scripts/
+│  ├─ harvest.py               crawls the dataset and curates the manifest
+│  ├─ translate.py             builds the Persian assets, resumable
+│  ├─ bundle-audio.mjs         encodes the corpus with ffmpeg
+│  ├─ fetch-fonts.mjs          re-vendors the webfonts
+│  ├─ run-verify.cjs           test runner; runs the suites below through jiti
+│  └─ verify*.ts               five assertion suites, 650 checks
+├─ docs/                       the screenshots above
+├─ next.config.mjs             cache headers, compiler and dev-indicator options
+├─ tailwind.config.ts
+├─ eslint.config.mjs
+├─ tsconfig.json
+├─ package.json
+├─ LICENSE
+└─ README.md
 ```
+
+## Under the hood
 
 Clips resolve in a fixed order: bundled file first, then the IndexedDB cache, then the
 Hugging Face datasets server as a fallback for a trimmed build or a clip discovered at
